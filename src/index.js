@@ -7,6 +7,8 @@ import createStore from './store';
 
 const store = createStore();
 
+console.log(store)
+
 ReactDOM.render(
   <Provider store={store}>
     <App />

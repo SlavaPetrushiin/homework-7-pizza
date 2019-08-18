@@ -14,8 +14,7 @@ class Clients extends PureComponent {
   };
 
   render() {
-    const { createOrder, orders } = this.props;
-
+		const { createOrder, orders } = this.props;
     return (
       <Box
         title="Клиенты"
@@ -29,6 +28,7 @@ class Clients extends PureComponent {
       >
         {orders.map(order => (
           <Order key={order.id} {...order} />
+
         ))}
       </Box>
     );
