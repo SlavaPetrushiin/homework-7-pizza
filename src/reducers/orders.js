@@ -1,3 +1,4 @@
+/* eslint-disable default-case */
 import { CREATE_NEW_ORDER } from '../modules/clients';
 import { MOVE_ORDER_NEXT, MOVE_ORDER_BACK } from '../actions/moveOrder';
 import { ADD_INGREDIENT } from '../actions/ingredients';
@@ -8,61 +9,27 @@ import { bindActionCreators } from 'C:/Users/DNS/AppData/Local/Microsoft/TypeScr
 // Обратите внимание на `orders.test.js`.
 // Он поможет понять, какие значения должен возвращать редьюсер.
 
-const OrdersPositions = {
-  clients: { next: 'conveyor_1', prev: null },
-  conveyor_1: { next: 'conveyor_2', prev: 'conveyor_1' },
-  conveyor_2: { next: 'conveyor_3', prev: 'conveyor_1' },
-  conveyor_3: { next: 'conveyor_4', prev: 'conveyor_2' },
-  conveyor_4: { next: 'finish', prev: 'conveyor_3' }
-};
-
-function moveOrderNext(state, action){
-	const id = action.payload;
-	let newState = [...state];
-	newState.forEach((order) => {
-		if(order.id === id){
-			for (let key in OrdersPositions){
-				if (order.position === key){
-					if(OrdersPositions[key].next === 'finish' && order.ingredients.length <  order.recipe.length){
-						return;
-					} else {
-						order.position = OrdersPositions[key].next;
-						return;
-					}
-				};
-			}  
-		}		
-	})
-	return newState;
+function comparisonIngredients(recipe, ingredients){
+	let result = true;
+	
+	if(recipe.length !== ingredients.length){
+			result = false;
+			return result;
+	}
+	
+	for(let i = 0; i < ingredients.length; i++){
+			if(!recipe.includes(ingredients[i])) {
+					result = false;
+					return result
+			}   
+	}
+	return true
 }
 
-function moveOrderBack(state, action){
-	let newState = [...state];
-	newState.forEach((order) => {
-		if(order.id === action.payload){
-			for (let key in OrdersPositions){
-				if (order.position === key){
-						order.position = OrdersPositions[key].prev
-						return
-				};
-			}  
-		}		
-	})
-	return newState;
-}
 
-function pushIngredients(state, action){
-	let newState = [...state];
-	const { from, ingredient } = action.payload;
 
-	newState.forEach(order => {
-		if(order.position === from && order.recipe.indexOf(ingredient) !== -1){
-			order.ingredients.push(ingredient);
-		}
-	})
 
-	return newState;
-}
+
 
 export default (state = [], action) => {
   switch (action.type) {
@@ -77,11 +44,57 @@ export default (state = [], action) => {
 				}
 			]			
 		case 'MOVE_ORDER_NEXT':
-			return moveOrderNext(state, action);
+			return state.map(order => {
+				if(order.id === action.payload){
+					switch (order.position){
+						case 'clients':
+							return {...order, position: 'conveyor_1'}
+						case 'conveyor_1':
+							return {...order, position: 'conveyor_2'}
+						case 'conveyor_2':
+							return {...order, position: 'conveyor_3'}
+						case 'conveyor_3':
+							return {...order, position: 'conveyor_4'}
+						case 'conveyor_4':
+							let isEveryIngredientsPresent = comparisonIngredients(order.recipe, order.ingredients) 
+							if (isEveryIngredientsPresent){
+								return {...order, position: 'finish'} 	
+							} else {
+								return order
+							}
+					}
+				} else {
+					return order
+				}
+			})
 		case 'MOVE_ORDER_BACK':
-			return moveOrderBack(state, action);
+				return state.map(order => {
+					if(order.id === action.payload){
+						switch (order.position){
+							case 'conveyor_2':
+								return {...order, position: 'conveyor_1'}
+							case 'conveyor_3':
+								return {...order, position: 'conveyor_2'}
+							case 'conveyor_4':
+								return {...order, position: 'conveyor_3'}
+							default:
+      					return order;	
+						}
+					} else {
+						return order
+					}
+				})
 		case 'ADD_INGREDIENT':
-			return pushIngredients(state, action);
+				const newItem = action.payload.ingredient;
+				const newState = state.map(item => {
+					debugger
+					const ingredients = item.ingredients;
+					debugger
+					return item.recipe.includes(newItem) ?
+						{...item, ingredients: [...ingredients, newItem]} :
+						item;
+				});
+				return newState;
     default:
       return state;
   }
